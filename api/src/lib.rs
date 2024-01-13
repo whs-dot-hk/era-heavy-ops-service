@@ -1,3 +1,4 @@
+#![feature(allocator_api)]
         pub mod gpu;
         pub use self::gpu::*;
         pub use gpu_prover;
