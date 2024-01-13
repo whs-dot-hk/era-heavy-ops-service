@@ -1,23 +1,11 @@
-#![cfg_attr(feature = "gpu", feature(allocator_api))]
-#![feature(get_mut_unchecked)]
-use cfg_if::*;
-
-cfg_if! {
-    if #[cfg(not(feature = "legacy"))]{
         pub mod gpu;
         pub use self::gpu::*;
         pub use gpu_prover;
-        #[cfg(feature = "gpu")]
         pub use gpu_prover::cuda_bindings::CudaAllocator;
         pub use gpu_prover::AsyncSetup;
         pub use gpu_prover::cuda_bindings::GpuError;
         use gpu_prover::ManagerConfigs;
-    }else{
-        mod legacy;
-        pub use self::legacy::*;
-    }
-}
-#[cfg(feature = "gpu")]
+
 use std::alloc::Global;
 
 use bellman::bn256::{Bn256, Fr};
@@ -49,14 +37,6 @@ use bellman::{
     SynthesisError,
 };
 
-#[cfg(not(feature = "gpu"))]
-pub type Assembly<S> = OriginalAssembly<
-    Bn256,
-    PlonkCsWidth4WithNextStepAndCustomGatesParams,
-    SelectorOptimizedWidth4MainGateWithDNext,
-    S,
->;
-#[cfg(feature = "gpu")]
 pub type Assembly<S> = OriginalAssembly<
     Bn256,
     PlonkCsWidth4WithNextStepAndCustomGatesParams,
@@ -65,9 +45,6 @@ pub type Assembly<S> = OriginalAssembly<
     CudaAllocator,
 >;
 
-#[cfg(feature = "legacy")]
-type Setup<C> = OriginalSetup<Bn256, C>;
-#[cfg(not(feature = "legacy"))]
 pub type Setup = AsyncSetup;
 
 pub type TrivialAssembly = Assembly<SynthesisModeTesting>;
@@ -139,10 +116,7 @@ impl Prover {
     }
 
     pub fn new_with_crs(crs: &Path) -> Self {
-        #[cfg(not(feature = "legacy"))]
         let ctx = ProverContext::init_with_crs(None, crs);
-        #[cfg(feature = "legacy")]
-        let ctx = ProverContext::init_with_crs(crs);
         Self { context: ctx }
     }
 
@@ -167,9 +141,7 @@ impl Prover {
     >(
         &mut self,
         assembly: &ProvingAssembly,
-        #[cfg(feature = "legacy")] setup: &Setup<C>,
-        #[cfg(feature = "gpu")] setup: &AsyncSetup, // uses Default = CudaAllocator
-        #[cfg(feature = "gpu_no_alloc")] setup: &AsyncSetup,
+        setup: &AsyncSetup, // uses Default = CudaAllocator
         transcript_params: Option<T::InitializationParameters>,
     ) -> Result<Proof<Bn256, C>, SynthesisError> {
         self.inner_create_proof::<_, T, _>(assembly, Some(setup), transcript_params)
@@ -191,22 +163,6 @@ impl Prover {
         Ok(vk)
     }
 
-    #[cfg(feature = "legacy")]
-    pub fn create_setup_from_assembly<C: Circuit<Bn256>, S: SynthesisMode>(
-        &mut self,
-        assembly: &Assembly<S>,
-    ) -> Result<Setup<C>, SynthesisError> {
-        assert!(assembly.is_finalized);
-        dbg!(Prover::get_max_domain_size());
-        dbg!(assembly.n() + 1);
-        assert!(assembly.n() + 1 <= Prover::get_max_domain_size());
-
-        let setup = self.inner_create_setup_from_assembly(assembly)?;
-
-        Ok(setup)
-    }
-
-    #[cfg(not(feature = "legacy"))]
     pub fn create_setup_from_assembly<C: Circuit<Bn256>, S: SynthesisMode>(
         &mut self,
         assembly: &Assembly<S>,

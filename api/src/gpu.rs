@@ -169,8 +169,7 @@ impl Prover {
     pub fn inner_create_proof<C: Circuit<Bn256>, T: Transcript<Fr>, S: SynthesisMode + 'static>(
         &mut self,
         assembly: &Assembly<S>,
-        #[cfg(feature = "gpu_no_alloc")] setup: Option<&AsyncSetup>,
-        #[cfg(feature = "gpu")] setup: Option<&AsyncSetup<CudaAllocator>>,
+        setup: Option<&AsyncSetup<CudaAllocator>>,
         transcript_params: Option<T::InitializationParameters>,
     ) -> Result<Proof<Bn256, C>, SynthesisError> {
         assert!(S::PRODUCE_WITNESS);
