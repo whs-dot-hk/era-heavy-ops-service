@@ -17,13 +17,6 @@ use zkevm_test_harness::{
 
 pub fn get_artifacts_dir() -> PathBuf {
     let log_size = Prover::get_max_domain_size().trailing_zeros();
-    #[cfg(feature = "legacy")]
-    let artifacts_dir = format!(
-        "{}/cpu/{}",
-        std::env::var("ARTIFACTS_DIR").expect("ARTIFACTS_DIR"),
-        log_size,
-    );
-    #[cfg(not(feature = "legacy"))]
     let artifacts_dir = format!(
         "{}/gpu/{}",
         std::env::var("ARTIFACTS_DIR").expect("ARTIFACTS_DIR"),
@@ -133,16 +126,6 @@ pub fn read_vk_from_file(circuit_id: u8) -> ZkSyncVerificationKey<Bn256> {
     vk
 }
 
-#[cfg(feature = "legacy")]
-pub fn read_setup_from_file(setup_file_path: &std::path::Path) -> Setup {
-    if !setup_file_path.exists() {
-        panic!("{} not exists", setup_file_path.to_str().unwrap());
-    }
-    let setup_file = std::fs::File::open(&setup_file_path).unwrap();
-    Setup::read(&setup_file).unwrap()
-}
-
-#[cfg(not(feature = "legacy"))]
 pub fn read_setup_from_file(setup_file_path: &std::path::Path) -> Setup {
     use prover::NUM_LOOKUP_TABLE_NONZERO_VALUES;
 
@@ -164,9 +147,6 @@ pub fn save_setup_into_file(setup: &Setup, setup_file_path: &std::path::Path) {
         return;
     }
     let setup_file = std::fs::File::create(&setup_file_path).unwrap();
-    #[cfg(feature = "legacy")]
-    setup.write(&setup_file).unwrap();
-    #[cfg(not(feature = "legacy"))]
     setup.write(&setup_file).unwrap();
 }
 
@@ -258,14 +238,6 @@ pub fn prove_for_circuit(
     ))
 }
 
-#[cfg(feature = "legacy")]
-pub fn decode_setup(circuit_id: u8, mut encoding: Box<dyn Read>) -> ZkSyncSetup {
-    let setup = Setup::read(encoding).unwrap();
-
-    ZkSyncSetup::from_setup_and_numeric_type(circuit_id, setup)
-}
-
-#[cfg(not(feature = "legacy"))]
 pub fn decode_setup(circuit_id: u8, mut encoding: Box<dyn Read>) -> ZkSyncSetup {
     use std::io::Read;
 
@@ -282,12 +254,6 @@ pub fn decode_setup(circuit_id: u8, mut encoding: Box<dyn Read>) -> ZkSyncSetup 
     // Arc::new(wrapped_setup)
 }
 
-#[cfg(feature = "legacy")]
-pub(crate) fn decode_setup_into_buf(setup: &mut ZkSyncSetup, mut encoding: Box<dyn Read>) {
-    *setup.as_setup_mut() = Setup::read(encoding).unwrap();
-}
-
-#[cfg(not(feature = "legacy"))]
 pub(crate) fn decode_setup_into_buf(setup: &mut ZkSyncSetup, encoding: Box<dyn Read>) {
     setup.as_setup_mut().read(encoding).unwrap();
 }

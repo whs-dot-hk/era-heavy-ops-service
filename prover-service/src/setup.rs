@@ -61,7 +61,6 @@ impl ZkSyncSetup {
         self.inner_mut().is_busy = false;
     }
 
-    #[cfg(not(feature = "legacy"))]
     pub fn reload(&mut self, encoding: Box<dyn Read>, circuit_id: u8) {
         assert!(self.is_free());
         let inner = self.as_setup_mut();
@@ -69,14 +68,6 @@ impl ZkSyncSetup {
         inner.read(encoding).unwrap();
         self.set_circuit_type(circuit_id);
         assert_eq!(self.numeric_circuit_type(), circuit_id);
-        self.inner_mut().is_busy = true;
-    }
-
-    #[cfg(feature = "legacy")]
-    pub fn reload(&mut self, encoding: Box<dyn Read>, circuit_id: u8) {
-        assert!(self.is_free());
-        self.inner_mut().inner = Setup::read(encoding).unwrap();
-        self.set_circuit_type(circuit_id);
         self.inner_mut().is_busy = true;
     }
 

@@ -4,9 +4,6 @@ use crate::utils::get_artifacts_dir;
 
 use super::*;
 
-#[cfg(feature = "legacy")]
-pub const SETUP_FILE_NAME: &str = "setup";
-#[cfg(not(feature = "legacy"))]
 pub const SETUP_FILE_NAME: &str = "minimal_setup";
 
 pub struct SimpleArtifactManager;

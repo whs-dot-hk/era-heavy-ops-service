@@ -1,5 +1,4 @@
-#![feature(get_mut_unchecked)]
-#![cfg_attr(feature = "gpu", feature(allocator_api))]
+#![feature(allocator_api)]
 pub mod remote_synth;
 pub mod run_prover;
 pub(crate) mod setup;
@@ -34,20 +33,13 @@ use prover::{Prover, ProvingAssembly};
 
 pub use utils::*;
 
-#[cfg(not(feature = "legacy"))]
 use prover::AsyncSetup;
-#[cfg(feature = "gpu")]
 use prover::CudaAllocator;
 
-#[cfg(feature = "legacy")]
-pub type Setup =
-    zkevm_test_harness::bellman::plonk::better_better_cs::setup::Setup<Bn256, ZkSyncCircuit>;
-#[cfg(not(feature = "legacy"))]
 pub type Setup = AsyncSetup;
 
 #[derive(Debug)]
 pub enum ProverError {
-    #[cfg(any(feature = "gpu", feature = "gpu_no_alloc"))]
     GpuError(prover::GpuError),
     SynthesisError(SynthesisError),
     Other(String),

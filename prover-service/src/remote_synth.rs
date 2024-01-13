@@ -17,17 +17,8 @@ use crate::run_prover::{
     recycle_assembly, ThreadGuard, ENCODER_THREAD_HANDLE, SYNTH_THREAD_HANDLE,
 };
 
-#[cfg(feature = "gpu")]
 use std::alloc::Allocator;
 
-#[cfg(not(feature = "gpu"))]
-macro_rules! new_vec_with_allocator {
-    ($capacity:expr) => {
-        Vec::with_capacity($capacity)
-    };
-}
-
-#[cfg(feature = "gpu")]
 macro_rules! new_vec_with_allocator {
     ($capacity:expr) => {
         Vec::with_capacity_in($capacity, prover::gpu_prover::cuda_bindings::CudaAllocator)
@@ -492,28 +483,7 @@ fn serialize_generic<T, W: Write>(data: &[T], buffer: &mut W) {
     buffer.write_all(slice).unwrap();
 }
 
-#[cfg(feature = "gpu")]
 fn deserialize_generic<T, A: Allocator, R: Read>(encoding: &mut R, buffer: &mut Vec<T, A>) {
-    let unit_len = std::mem::size_of::<T>();
-
-    let mut buf_num_bytes = [0u8; 8];
-    encoding.read_exact(&mut buf_num_bytes).unwrap();
-    let len = usize::from_le_bytes(buf_num_bytes);
-    let actual_len = len / unit_len;
-    assert!(len % unit_len == 0);
-    if buffer.capacity() < actual_len {
-        buffer.reserve(actual_len - buffer.capacity());
-    }
-    let ptr = buffer.as_mut_ptr() as *mut u8;
-    let slice = unsafe { std::slice::from_raw_parts_mut(ptr, len) };
-    unsafe {
-        buffer.set_len(actual_len);
-    }
-    encoding.read_exact(slice).unwrap();
-}
-
-#[cfg(not(feature = "gpu"))]
-fn deserialize_generic<T, R: Read>(encoding: &mut R, buffer: &mut Vec<T>) {
     let unit_len = std::mem::size_of::<T>();
 
     let mut buf_num_bytes = [0u8; 8];

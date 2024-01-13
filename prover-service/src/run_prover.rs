@@ -797,12 +797,6 @@ pub(crate) fn recycle_assembly(assembly: ProvingAssembly) -> ProvingAssembly {
     new_assembly
 }
 
-#[cfg(feature = "legacy")]
-pub(crate) fn create_prover_instances() -> Vec<(usize, Prover)> {
-    vec![(0, Prover::new())]
-}
-
-#[cfg(not(feature = "legacy"))]
 pub(crate) fn create_prover_instances() -> Vec<(usize, Prover)> {
     let actual_num_gpus = prover::gpu_prover::cuda_bindings::devices().unwrap() as usize;
 
