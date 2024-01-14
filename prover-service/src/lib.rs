@@ -1,3 +1,4 @@
+#![feature(get_mut_unchecked)]
 #![feature(allocator_api)]
 pub mod remote_synth;
 pub mod run_prover;
